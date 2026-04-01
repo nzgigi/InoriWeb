@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Etsy Dashboard</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root,[data-theme="light"]{
+  --bg:#f7f6f2;--surface:#f9f8f5;--surface2:#fbfbf9;--offset:#f3f0ec;--offset2:#edeae5;
+  --dynamic:#e6e4df;--divider:#dcd9d5;--border:#d4d1ca;
+  --text:#28251d;--muted:#7a7974;--faint:#bab9b4;--inverse:#f9f8f4;
+  --primary:#e8622a;--primary-h:#c44e1a;--primary-hl:#fde8d8;
+  --success:#437a22;--success-h:#2e5c10;--success-hl:#d4dfcc;
+  --error:#a12c7b;--error-hl:#e0ced7;
+  --warning:#964219;--warning-hl:#ddcfc6;
+  --gold:#d19900;--gold-hl:#e9e0c6;
+  --blue:#006494;--blue-hl:#c6d8e4;
+  --r-sm:.375rem;--r-md:.5rem;--r-lg:.75rem;--r-xl:1rem;--r-full:9999px;
+  --tr:180ms cubic-bezier(.16,1,.3,1);
+  --sh-sm:0 1px 2px rgba(40,37,29,.06);--sh-md:0 4px 12px rgba(40,37,29,.08);--sh-lg:0 12px 32px rgba(40,37,29,.12);
+  --xs:clamp(.75rem,.7rem + .25vw,.875rem);--sm:clamp(.875rem,.8rem + .35vw,1rem);
+  --base:clamp(1rem,.95rem + .25vw,1.125rem);--lg:clamp(1.125rem,1rem + .75vw,1.5rem);
+  --xl:clamp(1.5rem,1.2rem + 1.25vw,2.25rem);
+  --sp1:.25rem;--sp2:.5rem;--sp3:.75rem;--sp4:1rem;--sp5:1.25rem;--sp6:1.5rem;
+  --sp8:2rem;--sp10:2.5rem;--sp12:3rem;--sp16:4rem;
+  --font:'Satoshi',system-ui,sans-serif;
+  --sidebar:240px;
+}
+[data-theme="dark"]{
+  --bg:#171614;--surface:#1c1b19;--surface2:#201f1d;--offset:#1d1c1a;--offset2:#22211f;
+  --dynamic:#2d2c2a;--divider:#262523;--border:#393836;
+  --text:#cdccca;--muted:#797876;--faint:#5a5957;--inverse:#2b2a28;
+  --primary:#f47b39;--primary-h:#f26522;--primary-hl:#3a2a1e;
+  --success:#6daa45;--success-h:#4d8f25;--success-hl:#3a4435;
+  --error:#d163a7;--error-hl:#4c3d46;
+  --warning:#bb653b;--warning-hl:#564942;
+  --gold:#e8af34;--gold-hl:#4d4332;
+  --blue:#5591c7;--blue-hl:#3a4550;
+  --sh-sm:0 1px 2px rgba(0,0,0,.2);--sh-md:0 4px 12px rgba(0,0,0,.3);--sh-lg:0 12px 32px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);font-size:var(--sm);color:var(--text);background:var(--bg)}
+input,button,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+img{display:block;max-width:100%}
+a,button,[role=button],input,select{transition:color var(--tr),background var(--tr),border-color var(--tr),box-shadow var(--tr)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:3px;border-radius:var(--r-sm)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+
+/* LAYOUT */
+.dash{display:grid;grid-template-columns:var(--sidebar) 1fr;grid-template-rows:56px 1fr;height:100dvh}
+.sidebar{grid-row:1/-1;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;padding:var(--sp6) 0}
+.topbar{grid-column:2;background:var(--surface);border-bottom:1px solid var(--border);padding:0 var(--sp6);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.main{grid-column:2;overflow-y:auto;padding:var(--sp6);background:var(--bg)}
+
+/* SIDEBAR */
+.s-logo{display:flex;align-items:center;gap:var(--sp3);padding:0 var(--sp4) var(--sp6);border-bottom:1px solid var(--divider);margin-bottom:var(--sp4)}
+.s-logo-icon{width:32px;height:32px;background:var(--primary);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.s-logo-name{font-size:var(--sm);font-weight:700;letter-spacing:-.02em}
+.s-logo-sub{font-size:var(--xs);color:var(--muted)}
+.s-section{padding:0 var(--sp3);margin-bottom:var(--sp4)}
+.s-label{font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);padding:0 var(--sp2);margin-bottom:var(--sp2)}
+.nav-item{display:flex;align-items:center;gap:var(--sp3);padding:var(--sp2) var(--sp3);border-radius:var(--r-md);color:var(--muted);font-size:var(--sm);cursor:pointer;width:100%;text-align:left}
+.nav-item:hover{background:var(--offset);color:var(--text)}
+.nav-item.active{background:var(--primary-hl);color:var(--primary);font-weight:600}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.s-footer{margin-top:auto;padding:var(--sp4);border-top:1px solid var(--divider);font-size:var(--xs);color:var(--faint);text-align:center}
+
+/* TOPBAR */
+.t-title{font-size:var(--base);font-weight:600}
+.t-actions{display:flex;align-items:center;gap:var(--sp3)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:var(--sp2);padding:var(--sp2) var(--sp4);border-radius:var(--r-md);font-size:var(--sm);font-weight:500;cursor:pointer;border:none}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-h)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--offset);color:var(--text)}
+.btn-sm{padding:var(--sp1) var(--sp3);font-size:var(--xs)}
+.btn svg{width:14px;height:14px}
+.icon-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:var(--r-md);border:1px solid var(--border);background:transparent;color:var(--muted)}
+.icon-btn:hover{background:var(--offset);color:var(--text)}
+.icon-btn svg{width:15px;height:15px}
+
+/* PAGES */
+.page{display:none}.page.active{display:block}
+
+/* SECTION HEADER */
+.sec-head{margin-bottom:var(--sp5)}
+.sec-title{font-size:var(--lg);font-weight:700;letter-spacing:-.02em}
+.sec-sub{font-size:var(--sm);color:var(--muted);margin-top:var(--sp1)}
+.sec-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:var(--sp5)}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:var(--sp4);margin-bottom:var(--sp6)}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:var(--sp4) var(--sp5);box-shadow:var(--sh-sm);transition:box-shadow var(--tr)}
+.kpi:hover{box-shadow:var(--sh-md)}
+.kpi-lbl{font-size:var(--xs);color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--sp2)}
+.kpi-val{font-size:var(--xl);font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums lining-nums;line-height:1.1}
+.kpi-delta{font-size:var(--xs);margin-top:var(--sp2);color:var(--muted)}
+.delta-up{color:var(--success)}.delta-dn{color:var(--error)}
+
+/* CHARTS */
+.charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:var(--sp4);margin-bottom:var(--sp6)}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:var(--sp5);box-shadow:var(--sh-sm)}
+.chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp4)}
+.chart-title{font-size:var(--base);font-weight:600}
+.chart-sub{font-size:var(--xs);color:var(--muted);margin-top:2px}
+.chart-wrap{position:relative;height:200px}
+
+/* TABLE */
+.tbl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--sh-sm);overflow:hidden;margin-bottom:var(--sp6)}
+.tbl-head{padding:var(--sp4) var(--sp5);border-bottom:1px solid var(--divider);display:flex;align-items:center;justify-content:space-between}
+.tbl-title{font-size:var(--base);font-weight:600}
+table{width:100%;border-collapse:collapse}
+thead{background:var(--offset)}
+th{padding:var(--sp3) var(--sp4);font-size:var(--xs);font-weight:600;text-align:left;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;background:var(--offset)}
+td{padding:var(--sp3) var(--sp4);font-size:var(--sm);border-bottom:1px solid var(--divider);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--offset)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--r-full);font-size:.68rem;font-weight:600;letter-spacing:.03em}
+.b-ok{background:var(--success-hl);color:var(--success)}
+.b-mid{background:var(--gold-hl);color:var(--gold)}
+.b-bad{background:var(--error-hl);color:var(--error)}
+.empty-row{text-align:center;color:var(--faint);padding:var(--sp8) !important}
+
+/* CALC / FORM */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp6)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:var(--sp6);box-shadow:var(--sh-sm)}
+.card-title{font-size:var(--base);font-weight:700;margin-bottom:var(--sp5);display:flex;align-items:center;gap:var(--sp3)}
+.card-title svg{width:17px;height:17px;color:var(--primary)}
+.frow{margin-bottom:var(--sp4)}
+.flbl{display:block;font-size:var(--xs);font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:var(--sp2)}
+.finput{width:100%;padding:var(--sp2) var(--sp3);background:var(--offset);border:1px solid var(--border);border-radius:var(--r-md);font-size:var(--sm);color:var(--text)}
+.finput:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(232,98,42,.15)}
+.finput::placeholder{color:var(--faint)}
+.igroup{display:flex;align-items:center}
+.ipfx{padding:var(--sp2) var(--sp3);background:var(--dynamic);border:1px solid var(--border);border-right:none;border-radius:var(--r-md) 0 0 var(--r-md);font-size:var(--sm);color:var(--muted);font-weight:500}
+.igroup .finput{border-radius:0 var(--r-md) var(--r-md) 0}
+.fhint{font-size:var(--xs);color:var(--muted);margin-top:var(--sp1)}
+.fdivider{border:none;border-top:1px solid var(--divider);margin:var(--sp4) 0}
+
+/* RESULT */
+.res-block{background:var(--offset);border-radius:var(--r-lg);padding:var(--sp4);border:1px solid var(--border);margin-top:var(--sp4)}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:var(--sp1) 0;font-size:var(--sm)}
+.res-row.total{font-weight:700;font-size:var(--base);border-top:1px solid var(--border);margin-top:var(--sp2);padding-top:var(--sp2)}
+.res-lbl{color:var(--muted)}
+.res-val{font-variant-numeric:tabular-nums;font-weight:600}
+.v-neg{color:var(--error)}.v-pos{color:var(--success)}.v-warn{color:var(--gold)}
+.meter-wrap{margin-top:var(--sp4)}
+.meter-lbl{display:flex;justify-content:space-between;font-size:var(--xs);color:var(--muted);margin-bottom:var(--sp2)}
+.meter-bar{height:8px;background:var(--dynamic);border-radius:var(--r-full);overflow:hidden}
+.meter-fill{height:100%;border-radius:var(--r-full);transition:width .5s cubic-bezier(.16,1,.3,1),background .5s}
+
+/* CATALOGUE */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:var(--sp4)}
+.prod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--sh-sm);transition:box-shadow var(--tr),transform var(--tr)}
+.prod-card:hover{box-shadow:var(--sh-md);transform:translateY(-2px)}
+.prod-img{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:2.8rem;background:linear-gradient(135deg,var(--primary-hl),var(--gold-hl))}
+.prod-body{padding:var(--sp4)}
+.prod-name{font-weight:600;font-size:var(--sm);margin-bottom:2px}
+.prod-sku{font-size:var(--xs);color:var(--faint);margin-bottom:var(--sp3)}
+.prod-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp1)}
+.prod-price{font-size:var(--base);font-weight:700;color:var(--primary)}
+.prod-foot{border-top:1px solid var(--divider);padding-top:var(--sp3);margin-top:var(--sp3)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:var(--sp4);opacity:0;pointer-events:none;transition:opacity var(--tr)}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:var(--sp6);width:100%;max-width:520px;box-shadow:var(--sh-lg);transform:translateY(12px);transition:transform var(--tr)}
+.overlay.open .modal{transform:translateY(0)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp5)}
+.modal-title{font-size:var(--base);font-weight:700}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp4)}
+.full{grid-column:1/-1}
+
+/* PREVIEW */
+.preview{background:var(--offset);border:1px solid var(--border);border-radius:var(--r-lg);padding:var(--sp4);margin-top:var(--sp4)}
+.prev-lbl{font-size:var(--xs);font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:var(--sp2)}
+.prev-row{display:flex;gap:var(--sp6);flex-wrap:wrap}
+.prev-item .p-lbl{font-size:var(--xs);color:var(--muted)}
+.prev-item .p-val{font-weight:700;font-variant-numeric:tabular-nums}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:var(--sp6);right:var(--sp6);z-index:200;display:flex;flex-direction:column;gap:var(--sp2)}
+.toast{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-lg);padding:var(--sp3) var(--sp4);box-shadow:var(--sh-lg);font-size:var(--sm);display:flex;align-items:center;gap:var(--sp3);max-width:320px;animation:slideIn .3s cubic-bezier(.16,1,.3,1)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.t-ok svg{color:var(--success)}.t-err svg{color:var(--error)}
+.toast svg{width:15px;height:15px;flex-shrink:0}
+
+/* INFO BOXES */
+.info-box{background:var(--offset);border:1px solid var(--border);border-radius:var(--r-lg);padding:var(--sp4);margin-bottom:var(--sp3)}
+.info-box-title{font-weight:600;font-size:var(--sm);margin-bottom:var(--sp2)}
+.info-box.accent{background:var(--primary-hl);border-color:rgba(232,98,42,.25)}
+.info-box.accent .info-box-title{color:var(--primary)}
+
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:var(--sp16) var(--sp8);color:var(--muted)}
+.empty-state svg{width:48px;height:48px;color:var(--faint);margin-bottom:var(--sp4)}
+.empty-state h3{font-size:var(--base);font-weight:600;color:var(--text);margin-bottom:var(--sp2)}
+.empty-state p{font-size:var(--sm);max-width:36ch}
+
+/* RESPONSIVE */
+@media(max-width:900px){.charts-grid{grid-template-columns:1fr}.two-col{grid-template-columns:1fr}}
+@media(max-width:768px){
+  .dash{grid-template-columns:1fr;grid-template-rows:auto 56px 1fr}
+  .sidebar{grid-row:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:var(--sp2) var(--sp3);border-right:none;border-bottom:1px solid var(--border);--sidebar:auto}
+  .s-logo,.s-label,.s-footer{display:none}
+  .s-section{padding:0;margin:0;display:flex}
+  .topbar{grid-column:1}
+  .main{grid-column:1;padding:var(--sp4)}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .cat-grid{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr}
+}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr}.cat-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="dash">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="s-logo">
+      <div class="s-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      </div>
+      <div>
+        <div class="s-logo-name">EtsyTrack</div>
+        <div class="s-logo-sub">Mon shop Etsy</div>
+      </div>
+    </div>
+    <div class="s-section">
+      <div class="s-label">Principal</div>
+      <button class="nav-item active" onclick="go('overview',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Vue d'ensemble
+      </button>
+      <button class="nav-item" onclick="go('ventes',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>Ventes
+      </button>
+      <button class="nav-item" onclick="go('catalogue',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>Catalogue
+      </button>
+    </div>
+    <div class="s-section">
+      <div class="s-label">Outils</div>
+      <button class="nav-item" onclick="go('simulateur',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>Simulateur de prix
+      </button>
+      <button class="nav-item" onclick="go('taxes',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Taxes et Frais
+      </button>
+    </div>
+    <div class="s-footer">
+  <div style="display:flex;flex-direction:column;gap:var(--sp2);margin-bottom:var(--sp3)">
+    <button class="btn btn-ghost btn-sm" onclick="exportJSON()" style="width:100%;justify-content:center">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Sauvegarder
+    </button>
+    <button class="btn btn-ghost btn-sm" onclick="importJSON()" style="width:100%;justify-content:center">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Restaurer
+    </button>
+  </div>
+  EtsyTrack v1.0 — inori.tech
+</div>
+  </aside>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <span class="t-title" id="page-title">Vue d'ensemble</span>
+    <div class="t-actions">
+      <button class="btn btn-primary" onclick="openModal('m-sale')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajouter une vente
+      </button>
+      <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Changer theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- OVERVIEW -->
+    <div id="p-overview" class="page active">
+      <div class="sec-head">
+        <div class="sec-title">Vue d'ensemble</div>
+        <div class="sec-sub">Toutes vos metriques Etsy en un coup d'oeil</div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-lbl">Chiffre d'affaires</div>
+          <div class="kpi-val" id="k-ca">0,00 EUR</div>
+          <div class="kpi-delta" id="k-ca-d">0 vente(s)</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-lbl">Benefice net</div>
+          <div class="kpi-val" id="k-profit">0,00 EUR</div>
+          <div class="kpi-delta" id="k-margin">Marge: 0%</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-lbl">Nombre de ventes</div>
+          <div class="kpi-val" id="k-nb">0</div>
+          <div class="kpi-delta" id="k-avg">Moy. 0,00 EUR / vente</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-lbl">Frais totaux</div>
+          <div class="kpi-val" id="k-fees">0,00 EUR</div>
+          <div class="kpi-delta" style="color:var(--muted)">Livraison + commissions</div>
+        </div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-head"><div><div class="chart-title">CA et Benefice</div><div class="chart-sub">8 dernieres ventes</div></div></div>
+          <div class="chart-wrap"><canvas id="ch-bar"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><div><div class="chart-title">Repartition des couts</div><div class="chart-sub">Distribution des frais</div></div></div>
+          <div class="chart-wrap"><canvas id="ch-dough"></canvas></div>
+        </div>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-head">
+          <div class="tbl-title">Dernieres ventes</div>
+          <button class="btn btn-ghost btn-sm" onclick="go('ventes',null)">Voir tout</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Produit</th><th>Prix</th><th>Port client</th><th>Frais Etsy</th><th>Cout prod.</th><th>Benefice</th><th>Marge</th><th>Date</th></tr></thead>
+            <tbody id="ov-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VENTES -->
+    <div id="p-ventes" class="page">
+      <div class="sec-row">
+        <div><div class="sec-title">Ventes</div><div class="sec-sub">Historique complet de vos ventes</div></div>
+        <button class="btn btn-primary" onclick="openModal('m-sale')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nouvelle vente
+        </button>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-head">
+          <div class="tbl-title" id="v-count">0 vente</div>
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exporter CSV
+          </button>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>#</th><th>Produit</th><th>Prix</th><th>Port client</th><th>Port reel</th><th>Frais Etsy</th><th>Cout prod.</th><th>Benefice</th><th>Marge</th><th>Date</th><th></th></tr></thead>
+            <tbody id="v-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATALOGUE -->
+    <div id="p-catalogue" class="page">
+      <div class="sec-row">
+        <div><div class="sec-title">Catalogue produits</div><div class="sec-sub">Gerez vos articles et leurs couts</div></div>
+        <button class="btn btn-primary" onclick="openModal('m-prod')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter produit
+        </button>
+      </div>
+      <div class="cat-grid" id="cat-grid"></div>
+      <div class="empty-state" id="cat-empty" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+        <h3>Aucun produit dans le catalogue</h3>
+        <p>Ajoutez vos produits pour les retrouver lors de la saisie de ventes.</p>
+      </div>
+    </div>
+
+    <!-- SIMULATEUR -->
+    <div id="p-simulateur" class="page">
+      <div class="sec-head"><div class="sec-title">Simulateur de prix</div><div class="sec-sub">Calculez votre benefice net avant de fixer un prix</div></div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            Parametres de la vente
+          </div>
+          <div class="frow"><label class="flbl">Prix de vente affiche (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="s-price" class="finput" placeholder="25.00" min="0" step="0.01" oninput="updateSim()"></div><div class="fhint">Prix TTC affiche sur votre annonce Etsy</div></div>
+          <div class="frow"><label class="flbl">Frais de port factures au client (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="s-ship-c" class="finput" placeholder="4.95" min="0" step="0.01" oninput="updateSim()"></div></div>
+          <div class="frow"><label class="flbl">Cout reel livraison (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="s-ship-r" class="finput" placeholder="3.50" min="0" step="0.01" oninput="updateSim()"></div><div class="fhint">Ce que vous payez reellement au transporteur</div></div>
+          <hr class="fdivider">
+          <div class="frow"><label class="flbl">Cout de fabrication / achat (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="s-cost" class="finput" placeholder="5.00" min="0" step="0.01" oninput="updateSim()"></div><div class="fhint">Matieres premieres, fournitures, emballage</div></div>
+          <div class="frow"><label class="flbl">Commission Etsy (%)</label><div class="igroup"><span class="ipfx">%</span><input type="number" id="s-etsy" class="finput" value="6.5" min="0" max="100" step="0.1" oninput="updateSim()"></div><div class="fhint">6,5% standard + 4% si Etsy Ads</div></div>
+          <div class="frow"><label class="flbl">Frais de paiement (%)</label><div class="igroup"><span class="ipfx">%</span><input type="number" id="s-pay" class="finput" value="4" min="0" max="100" step="0.1" oninput="updateSim()"></div><div class="fhint">~4% Etsy Payments Europe</div></div>
+          <div class="frow"><label class="flbl">Frais mise en vente (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="s-list" class="finput" value="0.20" min="0" step="0.01" oninput="updateSim()"></div><div class="fhint">0,20 USD par annonce</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Resultat
+          </div>
+          <div class="res-block">
+            <div class="res-row"><span class="res-lbl">Prix de vente</span><span class="res-val" id="r-price">--</span></div>
+            <div class="res-row"><span class="res-lbl">+ Port client</span><span class="res-val" id="r-ship-in">--</span></div>
+            <div class="res-row" style="border-top:1px solid var(--border);padding-top:var(--sp1);margin-top:var(--sp1)"><span class="res-lbl">= Encaisse brut</span><span class="res-val" id="r-gross">--</span></div>
+            <div style="height:var(--sp2)"></div>
+            <div class="res-row"><span class="res-lbl">-- Commission Etsy (<span id="r-erate">6.5</span>%)</span><span class="res-val v-neg" id="r-comm">--</span></div>
+            <div class="res-row"><span class="res-lbl">-- Frais paiement (<span id="r-prate">4</span>%)</span><span class="res-val v-neg" id="r-pay">--</span></div>
+            <div class="res-row"><span class="res-lbl">-- Mise en vente</span><span class="res-val v-neg" id="r-list">--</span></div>
+            <div class="res-row"><span class="res-lbl">-- Livraison reelle</span><span class="res-val v-neg" id="r-ship-r">--</span></div>
+            <div class="res-row"><span class="res-lbl">-- Cout fabrication</span><span class="res-val v-neg" id="r-cost">--</span></div>
+            <div class="res-row total"><span style="color:var(--text)">Benefice net</span><span id="r-profit" style="font-size:var(--lg)">--</span></div>
+          </div>
+          <div class="meter-wrap">
+            <div class="meter-lbl"><span>Marge nette</span><span id="r-margin-pct">--</span></div>
+            <div class="meter-bar"><div class="meter-fill" id="r-meter" style="width:0%"></div></div>
+          </div>
+          <div style="margin-top:var(--sp5)">
+            <div class="flbl" style="margin-bottom:var(--sp2)">Prix min pour atteindre une marge de :</div>
+            <div style="display:flex;gap:var(--sp2);flex-wrap:wrap;margin-bottom:var(--sp3)">
+              <button class="btn btn-ghost btn-sm" onclick="minPrice(20)">20%</button>
+              <button class="btn btn-ghost btn-sm" onclick="minPrice(30)">30%</button>
+              <button class="btn btn-ghost btn-sm" onclick="minPrice(40)">40%</button>
+              <button class="btn btn-ghost btn-sm" onclick="minPrice(50)">50%</button>
+            </div>
+            <div id="r-minprice" style="font-size:var(--sm);color:var(--muted)">Remplissez les champs pour obtenir une suggestion.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAXES -->
+    <div id="p-taxes" class="page">
+      <div class="sec-head"><div class="sec-title">Taxes et Frais Etsy</div><div class="sec-sub">Recap de tous vos frais et obligations fiscales</div></div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+            Frais Etsy - Rappel
+          </div>
+          <div class="info-box"><div class="info-box-title">Commission de transaction</div><div style="font-size:var(--sm);color:var(--muted)"><strong style="color:var(--primary)">6,5%</strong> du prix de vente + frais de port. Appliquee sur l'encaissement total.</div></div>
+          <div class="info-box"><div class="info-box-title">Frais de traitement du paiement</div><div style="font-size:var(--sm);color:var(--muted)"><strong style="color:var(--primary)">~4% + 0,30 EUR</strong> en Europe. Etsy Payments obligatoire dans la plupart des pays.</div></div>
+          <div class="info-box"><div class="info-box-title">Frais de mise en vente</div><div style="font-size:var(--sm);color:var(--muted)"><strong style="color:var(--primary)">0,20 USD</strong> par annonce, renouvelee a chaque vente ou tous les 4 mois.</div></div>
+          <div class="info-box"><div class="info-box-title">Etsy Ads (optionnel)</div><div style="font-size:var(--sm);color:var(--muted)">Commission additionnelle de <strong style="color:var(--primary)">~3-4%</strong> si vos produits sont promus via Offsite Ads.</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Obligations fiscales BE
+          </div>
+          <div class="info-box accent"><div class="info-box-title">Activite complementaire</div><div style="font-size:var(--sm);color:var(--muted)">En Belgique, les revenus Etsy doivent etre declares. En dessous de <strong>~7 570 EUR/an</strong> (2024), vous beneficiez potentiellement du statut d'economie collaborative.</div></div>
+          <div class="info-box"><div class="info-box-title">TVA</div><div style="font-size:var(--sm);color:var(--muted)">En dessous du seuil de franchise (25 000 EUR/an), vous pouvez etre exempte de TVA. Au-dela : <strong>21%</strong>.</div></div>
+          <div class="info-box">
+            <div class="info-box-title">Simulateur impot</div>
+            <div class="frow" style="margin-bottom:var(--sp2)"><label class="flbl">Benefice net annuel estime (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="tax-in" class="finput" placeholder="3000" oninput="calcTax()"></div></div>
+            <div id="tax-out" style="font-size:var(--sm);color:var(--muted);padding:var(--sp3);background:var(--dynamic);border-radius:var(--r-md)">Entrez votre benefice annuel estime.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL VENTE -->
+<div class="overlay" id="m-sale">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Enregistrer une vente</div>
+      <button class="icon-btn" onclick="closeModal('m-sale')" style="width:28px;height:28px;border:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-grid">
+      <div class="frow full"><label class="flbl">Produit</label><select id="ns-prod-select" class="finput" onchange="fillFromProduct()"><option value="">-- Choisir une fiche produit --</option></select><input type="text" id="ns-prod" class="finput" placeholder="Ou saisir manuellement..." style="margin-top:var(--sp2)"><div class="fhint">Selectionnez une fiche ou saisissez manuellement</div></div>
+      <div class="frow"><label class="flbl">Prix de vente (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="ns-price" class="finput" placeholder="25.00" min="0" step="0.01" oninput="prevSale()"></div></div>
+      <div class="frow"><label class="flbl">Port client (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="ns-sc" class="finput" placeholder="4.95" min="0" step="0.01" oninput="prevSale()"></div></div>
+      <div class="frow"><label class="flbl">Cout livraison reel (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="ns-sr" class="finput" placeholder="3.50" min="0" step="0.01" oninput="prevSale()"></div></div>
+      <div class="frow"><label class="flbl">Cout fabrication (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="ns-cost" class="finput" placeholder="5.00" min="0" step="0.01" oninput="prevSale()"></div></div>
+      <div class="frow"><label class="flbl">Commission Etsy (%)</label><div class="igroup"><span class="ipfx">%</span><input type="number" id="ns-er" class="finput" value="6.5" min="0" max="100" step="0.1" oninput="prevSale()"></div></div>
+      <div class="frow"><label class="flbl">Frais paiement (%)</label><div class="igroup"><span class="ipfx">%</span><input type="number" id="ns-pr" class="finput" value="4" min="0" max="100" step="0.1" oninput="prevSale()"></div></div>
+      <div class="frow"><label class="flbl">Date de vente</label><input type="date" id="ns-date" class="finput"></div>
+    </div>
+    <div class="preview">
+      <div class="prev-lbl">Apercu</div>
+      <div class="prev-row">
+        <div class="prev-item"><div class="p-lbl">Encaisse brut</div><div class="p-val" id="pv-gross">--</div></div>
+        <div class="prev-item"><div class="p-lbl">Frais totaux</div><div class="p-val v-neg" id="pv-fees">--</div></div>
+        <div class="prev-item"><div class="p-lbl">Benefice net</div><div class="p-val" id="pv-profit">--</div></div>
+        <div class="prev-item"><div class="p-lbl">Marge</div><div class="p-val" id="pv-margin">--</div></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:var(--sp3);justify-content:flex-end;margin-top:var(--sp5)">
+      <button class="btn btn-ghost" onclick="closeModal('m-sale')">Annuler</button>
+      <button class="btn btn-primary" onclick="addSale()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRODUIT -->
+<div class="overlay" id="m-prod">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Ajouter un produit</div>
+      <button class="icon-btn" onclick="closeModal('m-prod')" style="width:28px;height:28px;border:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-grid">
+      <div class="frow full"><label class="flbl">Nom du produit</label><input type="text" id="np-name" class="finput" placeholder="ex: Collier Lune Argent 925"></div>
+      <div class="frow full"><label class="flbl">SKU / Reference (optionnel)</label><input type="text" id="np-sku" class="finput" placeholder="ex: BIJ-001"></div>
+      <div class="frow"><label class="flbl">Prix de vente conseille (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="np-price" class="finput" placeholder="25.00" min="0" step="0.01"></div></div>
+      <div class="frow"><label class="flbl">Cout de fabrication (EUR)</label><div class="igroup"><span class="ipfx">EUR</span><input type="number" id="np-cost" class="finput" placeholder="5.00" min="0" step="0.01"></div></div>
+      <div class="frow full"><label class="flbl">Emoji / Icone (fallback)</label><input type="text" id="np-emoji" class="finput" placeholder="exemple: bague" maxlength="4"></div>
+      <div class="frow full"><label class="flbl">URL image produit (optionnel)</label><input type="text" id="np-img" class="finput" placeholder="https://...image.jpg"><div class="fhint">Lien direct vers une image (AliExpress, etc.) — si indisponible, l'emoji s'affiche</div></div>
+      <div class="frow full"><label class="flbl">Lien fournisseur (optionnel)</label><input type="text" id="np-supplier" class="finput" placeholder="https://fr.aliexpress.com/item/..."></div>
+      <div class="frow full"><label class="flbl">Notes (optionnel)</label><textarea id="np-notes" class="finput" placeholder="ex: Livraison 15j, MOQ 10 pieces..." rows="2" style="resize:vertical"></textarea></div>
+    </div>
+    <div style="display:flex;gap:var(--sp3);justify-content:flex-end;margin-top:var(--sp5)">
+      <button class="btn btn-ghost" onclick="closeModal('m-prod')">Annuler</button>
+      <button class="btn btn-primary" onclick="addProduct()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+var sales = [];
+var products = [];
+
+function loadData() {
+  fetch('/api/etsy/load')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      sales = data.sales || [];
+      products = data.products || [];
+      renderAll();
+      refreshProductSelect();
+    })
+    .catch(function() {
+      // fallback localStorage si API down
+      try {
+        var s = localStorage.getItem('etsy_sales');
+        var p = localStorage.getItem('etsy_products');
+        sales = s ? JSON.parse(s) : [];
+        products = p ? JSON.parse(p) : [];
+      } catch(e) { sales = []; products = []; }
+      renderAll();
+      refreshProductSelect();
+    });
+}
+
+function saveData() {
+  var payload = { sales: sales, products: products };
+  fetch('/api/etsy/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(function() {
+    // fallback localStorage si API down
+    try {
+      localStorage.setItem('etsy_sales', JSON.stringify(sales));
+      localStorage.setItem('etsy_products', JSON.stringify(products));
+    } catch(e) {}
+  });
+}
+var chBar = null;
+var chDough = null;
+
+var PAGE_LABELS = {
+  overview: "Vue d'ensemble",
+  ventes: "Ventes",
+  catalogue: "Catalogue",
+  simulateur: "Simulateur de prix",
+  taxes: "Taxes et Frais"
+};
+
+/* NAV */
+function go(id, btn) {
+  var pages = document.querySelectorAll('.page');
+  for (var i = 0; i < pages.length; i++) pages[i].classList.remove('active');
+  document.getElementById('p-' + id).classList.add('active');
+  var navs = document.querySelectorAll('.nav-item');
+  for (var i = 0; i < navs.length; i++) navs[i].classList.remove('active');
+  if (btn) btn.classList.add('active');
+  document.getElementById('page-title').textContent = PAGE_LABELS[id] || id;
+  if (id === 'overview') renderOverview();
+  if (id === 'catalogue') renderCat();
+  if (id === 'ventes') renderVentes();
+}
+
+/* THEME */
+function toggleTheme() {
+  var html = document.documentElement;
+  var cur = html.getAttribute('data-theme');
+  var next = cur === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  var btn = document.getElementById('theme-btn');
+  if (next === 'dark') {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  } else {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+  }
+  setTimeout(function() { renderCharts(); }, 200);
+}
+
+/* MODAL */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'm-sale') {
+    document.getElementById('ns-date').value = new Date().toISOString().split('T')[0];
+    refreshProductSelect();
+    prevSale();
+  }
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+var overlays = document.querySelectorAll('.overlay');
+for (var i = 0; i < overlays.length; i++) {
+  overlays[i].addEventListener('click', function(e) {
+    if (e.target === this) closeModal(this.id);
+  });
+}
+
+/* TOAST */
+function toast(msg, type) {
+  type = type || 'ok';
+  var c = document.getElementById('toasts');
+  var t = document.createElement('div');
+  t.className = 'toast t-' + type;
+  var icon = type === 'ok'
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polyline points="20 6 9 17 4 12"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+  t.innerHTML = icon + '<span>' + msg + '</span>';
+  c.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 3500);
+}
+
+/* CALC */
+function calc(price, sc, sr, cost, er, pr, lf) {
+  price = parseFloat(price) || 0;
+  sc = parseFloat(sc) || 0;
+  sr = parseFloat(sr) || 0;
+  cost = parseFloat(cost) || 0;
+  er = parseFloat(er) || 6.5;
+  pr = parseFloat(pr) || 4;
+  lf = parseFloat(lf) || 0.20;
+  var gross = price + sc;
+  var comm = gross * (er / 100);
+  var pay = gross * (pr / 100);
+  var totalFees = comm + pay + lf + sr + cost;
+  var profit = gross - totalFees;
+  var margin = gross > 0 ? (profit / gross) * 100 : 0;
+  return { gross: gross, comm: comm, pay: pay, totalFees: totalFees, profit: profit, margin: margin };
+}
+
+function f(n) { return (Math.round(n * 100) / 100).toFixed(2) + ' EUR'; }
+function fp(n) { return (Math.round(n * 10) / 10).toFixed(1) + '%'; }
+function badge(m) { return m >= 30 ? 'b-ok' : m >= 10 ? 'b-mid' : 'b-bad'; }
+function fdate(d) {
+  var dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('fr-BE', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+/* SIMULATEUR */
+function updateSim() {
+  var price = parseFloat(document.getElementById('s-price').value) || 0;
+  var sc = parseFloat(document.getElementById('s-ship-c').value) || 0;
+  var sr = parseFloat(document.getElementById('s-ship-r').value) || 0;
+  var cost = parseFloat(document.getElementById('s-cost').value) || 0;
+  var er = parseFloat(document.getElementById('s-etsy').value) || 6.5;
+  var pr = parseFloat(document.getElementById('s-pay').value) || 4;
+  var lf = parseFloat(document.getElementById('s-list').value) || 0.20;
+  document.getElementById('r-erate').textContent = er;
+  document.getElementById('r-prate').textContent = pr;
+  if (!price) {
+    var ids = ['r-price','r-ship-in','r-gross','r-comm','r-pay','r-list','r-ship-r','r-cost','r-profit'];
+    for (var i = 0; i < ids.length; i++) document.getElementById(ids[i]).textContent = '--';
+    document.getElementById('r-margin-pct').textContent = '--';
+    document.getElementById('r-meter').style.width = '0%';
+    return;
+  }
+  var r = calc(price, sc, sr, cost, er, pr, lf);
+  document.getElementById('r-price').textContent = f(price);
+  document.getElementById('r-ship-in').textContent = f(sc);
+  document.getElementById('r-gross').textContent = f(r.gross);
+  document.getElementById('r-comm').textContent = '-' + f(r.comm);
+  document.getElementById('r-pay').textContent = '-' + f(r.pay);
+  document.getElementById('r-list').textContent = '-' + f(lf);
+  document.getElementById('r-ship-r').textContent = '-' + f(sr);
+  document.getElementById('r-cost').textContent = '-' + f(cost);
+  var profEl = document.getElementById('r-profit');
+  profEl.textContent = f(r.profit);
+  profEl.className = 'res-val ' + (r.profit >= 0 ? 'v-pos' : 'v-neg');
+  document.getElementById('r-margin-pct').textContent = fp(r.margin);
+  var w = Math.max(0, Math.min(100, r.margin));
+  var meter = document.getElementById('r-meter');
+  meter.style.width = w + '%';
+  meter.style.background = r.margin >= 30 ? 'var(--success)' : r.margin >= 10 ? 'var(--gold)' : 'var(--error)';
+}
+
+function minPrice(target) {
+  var sc = parseFloat(document.getElementById('s-ship-c').value) || 0;
+  var sr = parseFloat(document.getElementById('s-ship-r').value) || 0;
+  var cost = parseFloat(document.getElementById('s-cost').value) || 0;
+  var er = (parseFloat(document.getElementById('s-etsy').value) || 6.5) / 100;
+  var pr = (parseFloat(document.getElementById('s-pay').value) || 4) / 100;
+  var lf = parseFloat(document.getElementById('s-list').value) || 0.20;
+  var t = target / 100;
+  var grossNeeded = (lf + sr + cost) / (1 - er - pr - t);
+  var priceNeeded = grossNeeded - sc;
+  var el = document.getElementById('r-minprice');
+  el.innerHTML = 'Pour ' + target + '% de marge : prix minimum = <strong style="color:var(--primary)">' + f(Math.max(0, priceNeeded)) + '</strong>';
+}
+
+/* PREVIEW SALE */
+function prevSale() {
+  var price = parseFloat(document.getElementById('ns-price').value) || 0;
+  var sc = parseFloat(document.getElementById('ns-sc').value) || 0;
+  var sr = parseFloat(document.getElementById('ns-sr').value) || 0;
+  var cost = parseFloat(document.getElementById('ns-cost').value) || 0;
+  var er = parseFloat(document.getElementById('ns-er').value) || 6.5;
+  var pr = parseFloat(document.getElementById('ns-pr').value) || 4;
+  var r = calc(price, sc, sr, cost, er, pr);
+  document.getElementById('pv-gross').textContent = price ? f(r.gross) : '--';
+  document.getElementById('pv-fees').textContent = price ? f(r.totalFees) : '--';
+  var pe = document.getElementById('pv-profit');
+  pe.textContent = price ? f(r.profit) : '--';
+  pe.style.color = price ? (r.profit >= 0 ? 'var(--success)' : 'var(--error)') : '';
+  document.getElementById('pv-margin').textContent = price ? fp(r.margin) : '--';
+}
+
+/* ADD SALE */
+function addSale() {
+  var product = document.getElementById('ns-prod').value.trim() || 'Produit sans nom';
+  var price = parseFloat(document.getElementById('ns-price').value) || 0;
+  if (!price) { toast('Entrez un prix de vente.', 'err'); return; }
+  var sc = parseFloat(document.getElementById('ns-sc').value) || 0;
+  var sr = parseFloat(document.getElementById('ns-sr').value) || 0;
+  var cost = parseFloat(document.getElementById('ns-cost').value) || 0;
+  var er = parseFloat(document.getElementById('ns-er').value) || 6.5;
+  var pr = parseFloat(document.getElementById('ns-pr').value) || 4;
+  var date = document.getElementById('ns-date').value || new Date().toISOString().split('T')[0];
+  var r = calc(price, sc, sr, cost, er, pr);
+  var sale = {
+    id: Date.now(),
+    product: product, price: price, shipClient: sc, shipReal: sr,
+    prodCost: cost, etsyRate: er, payRate: pr, date: date,
+    gross: r.gross, comm: r.comm, pay: r.pay, totalFees: r.totalFees,
+    profit: r.profit, margin: r.margin
+  };
+  sales.push(sale);
+  saveData();
+  closeModal('m-sale');
+  document.getElementById('ns-prod').value = '';
+  document.getElementById('ns-price').value = '';
+  document.getElementById('ns-sc').value = '';
+  document.getElementById('ns-sr').value = '';
+  document.getElementById('ns-cost').value = '';
+  toast('Vente enregistree - benefice : ' + f(r.profit));
+  renderAll();
+}
+
+function delSale(id) {
+  for (var i = 0; i < sales.length; i++) {
+    if (sales[i].id === id) { sales.splice(i, 1); break; }
+  }
+  saveData();
+  renderAll();
+  toast('Vente supprimee.', 'err');
+}
+
+/* ADD PRODUCT */
+function addProduct() {
+  var name = document.getElementById('np-name').value.trim();
+  if (!name) { toast('Entrez un nom de produit.', 'err'); return; }
+  var sku = document.getElementById('np-sku').value.trim();
+  var price = parseFloat(document.getElementById('np-price').value) || 0;
+  var cost = parseFloat(document.getElementById('np-cost').value) || 0;
+  var emoji = document.getElementById('np-emoji').value || '💍';
+  var imgUrl = document.getElementById('np-img').value.trim();
+  var supplier = document.getElementById('np-supplier').value.trim();
+  var notes = document.getElementById('np-notes').value.trim();
+  products.push({ id: Date.now(), name: name, sku: sku, price: price, cost: cost, emoji: emoji, imgUrl: imgUrl, supplier: supplier, notes: notes });
+  saveData();
+  closeModal('m-prod');
+  document.getElementById('np-name').value = '';
+  document.getElementById('np-sku').value = '';
+  document.getElementById('np-price').value = '';
+  document.getElementById('np-cost').value = '';
+  document.getElementById('np-emoji').value = '';
+  document.getElementById('np-img').value = '';
+  document.getElementById('np-supplier').value = '';
+  document.getElementById('np-notes').value = '';
+  toast('Produit ajoute : ' + name);
+  renderCat();
+  refreshProductSelect();
+}
+
+function delProduct(id) {
+  for (var i = 0; i < products.length; i++) {
+    if (products[i].id === id) { products.splice(i, 1); break; }
+  }
+  saveData();
+  renderCat();
+  toast('Produit supprime.', 'err');
+}
+
+/* RENDER */
+function renderAll() { renderOverview(); renderVentes(); renderCat(); }
+
+function renderOverview() {
+  var ca = 0, profit = 0, fees = 0;
+  for (var i = 0; i < sales.length; i++) {
+    ca += sales[i].gross;
+    profit += sales[i].profit;
+    fees += sales[i].totalFees;
+  }
+  var nb = sales.length;
+  var margin = ca > 0 ? (profit / ca) * 100 : 0;
+  var avg = nb > 0 ? ca / nb : 0;
+  setAnim('k-ca', ca, true);
+  setAnim('k-profit', profit, true);
+  setAnim('k-fees', fees, true);
+  document.getElementById('k-nb').textContent = nb;
+  document.getElementById('k-ca-d').textContent = nb + ' vente(s)';
+  document.getElementById('k-margin').textContent = 'Marge: ' + fp(margin);
+  document.getElementById('k-avg').textContent = 'Moy. ' + f(avg) + ' / vente';
+  document.getElementById('v-count').textContent = nb + ' vente' + (nb > 1 ? 's' : '');
+  // Table
+  var tbody = document.getElementById('ov-tbody');
+  if (nb === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-row">Aucune vente. Ajoutez votre premiere vente !</td></tr>';
+  } else {
+    var rows = '';
+    var slice = sales.slice(-5).reverse();
+    for (var i = 0; i < slice.length; i++) {
+      var s = slice[i];
+      var etsy = s.comm + s.pay + 0.20;
+      var cls = s.profit >= 0 ? 'v-pos' : 'v-neg';
+      rows += '<tr>'
+        + '<td style="font-weight:600">' + s.product + '</td>'
+        + '<td>' + f(s.price) + '</td>'
+        + '<td>' + f(s.shipClient) + '</td>'
+        + '<td class="v-neg">-' + f(etsy) + '</td>'
+        + '<td style="color:var(--muted)">' + f(s.prodCost) + '</td>'
+        + '<td class="' + cls + '" style="font-weight:700">' + f(s.profit) + '</td>'
+        + '<td><span class="badge ' + badge(s.margin) + '">' + fp(s.margin) + '</span></td>'
+        + '<td style="color:var(--muted)">' + fdate(s.date) + '</td>'
+        + '</tr>';
+    }
+    tbody.innerHTML = rows;
+  }
+  renderCharts();
+}
+
+function renderVentes() {
+  var nb = sales.length;
+  document.getElementById('v-count').textContent = nb + ' vente' + (nb > 1 ? 's' : '');
+  var tbody = document.getElementById('v-tbody');
+  if (nb === 0) {
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-row">Aucune vente. Commencez !</td></tr>';
+    return;
+  }
+  var rows = '';
+  var list = sales.slice().reverse();
+  for (var i = 0; i < list.length; i++) {
+    var s = list[i];
+    var idx = nb - i;
+    var etsy = s.comm + s.pay + 0.20;
+    var cls = s.profit >= 0 ? 'v-pos' : 'v-neg';
+    var sid = s.id;
+    rows += '<tr>'
+      + '<td style="color:var(--faint)">#' + idx + '</td>'
+      + '<td style="font-weight:600">' + s.product + '</td>'
+      + '<td>' + f(s.price) + '</td>'
+      + '<td>' + f(s.shipClient) + '</td>'
+      + '<td class="v-neg">-' + f(s.shipReal) + '</td>'
+      + '<td class="v-neg">-' + f(etsy) + '</td>'
+      + '<td style="color:var(--muted)">' + f(s.prodCost) + '</td>'
+      + '<td class="' + cls + '" style="font-weight:700">' + f(s.profit) + '</td>'
+      + '<td><span class="badge ' + badge(s.margin) + '">' + fp(s.margin) + '</span></td>'
+      + '<td style="color:var(--muted)">' + fdate(s.date) + '</td>'
+      + '<td><button onclick="delSale(' + sid + ')" style="color:var(--faint);padding:4px;border-radius:var(--r-sm)" title="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H5L4 6"/></svg></button></td>'
+      + '</tr>';
+  }
+  tbody.innerHTML = rows;
+}
+
+function renderCat() {
+  var grid = document.getElementById('cat-grid');
+  var empty = document.getElementById('cat-empty');
+  if (products.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+  var html = '';
+  for (var i = 0; i < products.length; i++) {
+    var p = products[i];
+    var m = p.price > 0 ? ((p.price - p.cost) / p.price) * 100 : 0;
+    var pid = p.id;
+    html += '<div class="prod-card">'
+      + '<div class="prod-img" id="pimg-' + p.id + '">' + (p.emoji || '💍') + '</div>'
+      + '<div class="prod-body">'
+      + '<div class="prod-name">' + p.name + '</div>'
+      + '<div class="prod-sku">' + (p.sku || 'Pas de reference') + '</div>'
+      + '<div class="prod-row"><span class="prod-price">' + f(p.price) + '</span><span class="badge ' + badge(m) + '">' + fp(m) + '</span></div>'
+      + '<div style="font-size:var(--xs);color:var(--muted)">Cout: ' + f(p.cost) + '</div>'
+      + (p.supplier ? '<div style="margin-bottom:var(--sp2)"><a href="' + p.supplier + '" target="_blank" rel="noopener" style="font-size:var(--xs);color:var(--primary);text-decoration:none;display:flex;align-items:center;gap:4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Voir fournisseur</a></div>' : '')
+      + (p.notes ? '<div style="font-size:var(--xs);color:var(--muted);margin-bottom:var(--sp2);font-style:italic">' + p.notes + '</div>' : '')
+      + '<div class="prod-foot"><button class="btn btn-ghost btn-sm" onclick="delProduct(' + pid + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H5L4 6"/></svg>Supprimer</button></div>'
+      + '</div></div>';
+  }
+  grid.innerHTML = html;
+  // Load product images with fallback
+  for (var j = 0; j < products.length; j++) {
+    (function(prod) {
+      if (!prod.imgUrl) return;
+      var el = document.getElementById('pimg-' + prod.id);
+      if (!el) return;
+      var img = new Image();
+      img.onload = function() {
+        el.innerHTML = '';
+        el.style.padding = '0';
+        var imgEl = document.createElement('img');
+        imgEl.src = prod.imgUrl;
+        imgEl.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+        imgEl.alt = prod.name;
+        el.appendChild(imgEl);
+      };
+      img.onerror = function() { /* keep emoji fallback */ };
+      img.src = prod.imgUrl;
+    })(products[j]);
+  }
+}
+
+/* CHARTS */
+function getColors() {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  return {
+    primary: dark ? '#f47b39' : '#e8622a',
+    success: dark ? '#6daa45' : '#437a22',
+    grid: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+    text: dark ? '#797876' : '#7a7974',
+    surface: dark ? '#1c1b19' : '#f9f8f5'
+  };
+}
+
+function renderCharts() {
+  var c = getColors();
+  if (chBar) { chBar.destroy(); chBar = null; }
+  if (chDough) { chDough.destroy(); chDough = null; }
+
+  var last8 = sales.slice(-8);
+  var labels = [];
+  for (var i = 0; i < last8.length; i++) {
+    var n = last8[i].product;
+    labels.push(n.length > 12 ? n.substring(0, 12) + '...' : n);
+  }
+  var grossData = [], profitData = [];
+  for (var i = 0; i < last8.length; i++) {
+    grossData.push(last8[i].gross);
+    profitData.push(last8[i].profit);
+  }
+
+  var barCtx = document.getElementById('ch-bar');
+  if (barCtx) {
+    chBar = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: labels.length ? labels : ['--'],
+        datasets: [
+          { label: 'CA', data: grossData, backgroundColor: c.primary + '99', borderColor: c.primary, borderWidth: 1.5, borderRadius: 4 },
+          { label: 'Benefice', data: profitData, backgroundColor: c.success + '99', borderColor: c.success, borderWidth: 1.5, borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: c.text, font: { family: 'Satoshi', size: 11 }, boxWidth: 12 } } },
+        scales: {
+          x: { ticks: { color: c.text, font: { size: 10 } }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text, font: { size: 10 }, callback: function(v) { return v + ' EUR'; } }, grid: { color: c.grid } }
+        }
+      }
+    });
+  }
+
+  var tComm = 0, tShip = 0, tProd = 0, tProfit = 0;
+  for (var i = 0; i < sales.length; i++) {
+    tComm += sales[i].comm + sales[i].pay + 0.20;
+    tShip += sales[i].shipReal;
+    tProd += sales[i].prodCost;
+    if (sales[i].profit > 0) tProfit += sales[i].profit;
+  }
+
+  var doughCtx = document.getElementById('ch-dough');
+  if (doughCtx) {
+    chDough = new Chart(doughCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Benefice net', 'Commissions Etsy', 'Livraison', 'Fabrication'],
+        datasets: [{
+          data: [tProfit, tComm, tShip, tProd],
+          backgroundColor: [c.success + 'cc', c.primary + 'cc', '#5591c7cc', '#e8af34cc'],
+          borderColor: c.surface,
+          borderWidth: 3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { color: c.text, font: { family: 'Satoshi', size: 10 }, boxWidth: 10, padding: 8 } } },
+        cutout: '65%'
+      }
+    });
+  }
+}
+
+/* TAX */
+function calcTax() {
+  var income = parseFloat(document.getElementById('tax-in').value) || 0;
+  var el = document.getElementById('tax-out');
+  if (!income) { el.textContent = 'Entrez votre benefice annuel estime.'; return; }
+  var threshold = 7570;
+  if (income <= threshold) {
+    var est = (income * 0.10).toFixed(2);
+    el.innerHTML = '<strong style="color:var(--success)">Seuil economie collaborative non atteint</strong><br>'
+      + 'Benefice : <strong>' + f(income) + '</strong><br>'
+      + 'Impot estime : <strong>' + est + ' EUR</strong> (~10%)<br>'
+      + '<span style="font-size:var(--xs);color:var(--faint)">Consultez un comptable pour votre situation.</span>';
+  } else {
+    var est = (income * 0.25).toFixed(2);
+    el.innerHTML = '<strong style="color:var(--warning)">Seuil economie collaborative depasse</strong><br>'
+      + 'Benefice : <strong>' + f(income) + '</strong><br>'
+      + 'Declaration obligatoire comme activite commerciale.<br>'
+      + 'Impot estime : <strong>' + est + ' EUR</strong> (~25%)<br>'
+      + '<span style="font-size:var(--xs);color:var(--faint)">Consultez un comptable ou l\'INASTI.</span>';
+  }
+}
+
+/* ANIMATE NUMBER */
+function setAnim(id, target, isCur) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var dur = 600;
+  var start = performance.now();
+  function step(now) {
+    var p = Math.min((now - start) / dur, 1);
+    var e = 1 - Math.pow(1 - p, 3);
+    var v = target * e;
+    el.textContent = isCur ? (Math.round(v * 100) / 100).toFixed(2) + ' EUR' : Math.round(v).toString();
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* EXPORT CSV */
+function exportCSV() {
+  if (sales.length === 0) { toast('Aucune vente a exporter.', 'err'); return; }
+  var headers = ['#','Produit','Prix','Port client','Port reel','Frais Etsy','Cout fabrication','Benefice net','Marge %','Date'];
+  var rows = [headers.join(',')];
+  var list = sales.slice().reverse();
+  for (var i = 0; i < list.length; i++) {
+    var s = list[i];
+    var etsy = (s.comm + s.pay + 0.20).toFixed(2);
+    rows.push([
+      sales.length - i, '"' + s.product + '"', s.price.toFixed(2), s.shipClient.toFixed(2),
+      s.shipReal.toFixed(2), etsy, s.prodCost.toFixed(2), s.profit.toFixed(2), s.margin.toFixed(1), s.date
+    ].join(','));
+  }
+  var csv = rows.join('\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'etsy-ventes-' + new Date().toISOString().split('T')[0] + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Export CSV telecharge !');
+}
+
+/* BACKUP */
+function exportJSON() {
+  var data = { sales: sales, products: products, exported: new Date().toISOString() };
+  var json = JSON.stringify(data, null, 2);
+  var blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'etsy-backup-' + new Date().toISOString().split('T')[0] + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Sauvegarde JSON telechargee !');
+}
+
+function importJSON() {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var data = JSON.parse(ev.target.result);
+        if (data.sales) sales = data.sales;
+        if (data.products) products = data.products;
+        saveData();
+        renderAll();
+        refreshProductSelect();
+        toast('Donnees restaurees : ' + sales.length + ' vente(s), ' + products.length + ' produit(s)');
+      } catch(err) {
+        toast('Fichier invalide.', 'err');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+/* PRODUCT SELECT */
+function fillFromProduct() {
+  var sel = document.getElementById('ns-prod-select');
+  var idx = parseInt(sel.value);
+  if (!idx) return;
+  var prod = null;
+  for (var i = 0; i < products.length; i++) {
+    if (products[i].id === idx) { prod = products[i]; break; }
+  }
+  if (!prod) return;
+  document.getElementById('ns-prod').value = prod.name;
+  document.getElementById('ns-cost').value = prod.cost;
+  document.getElementById('ns-price').value = prod.price;
+  prevSale();
+}
+
+function refreshProductSelect() {
+  var sel = document.getElementById('ns-prod-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Choisir une fiche produit --</option>';
+  for (var i = 0; i < products.length; i++) {
+    var opt = document.createElement('option');
+    opt.value = products[i].id;
+    opt.textContent = products[i].emoji + ' ' + products[i].name;
+    sel.appendChild(opt);
+  }
+}
+
+/* INIT */
+loadData(); // async — renderAll + refreshProductSelect appeles dans le callback
+</script>
+</body>
+</html>

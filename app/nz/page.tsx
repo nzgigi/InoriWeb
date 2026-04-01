@@ -63,7 +63,7 @@ export default function InoriWebPage() {
       description: 'Plateforme éducative avec système de QCM pour étudiants en médecine. Interface moderne et intuitive.',
       category: 'Plateforme web',
       image: '/projects/medecine.png',
-      link: 'https://inoritech.fr'
+      link: 'https://medecinehub.fr'
     },
     {
       id: '2',
